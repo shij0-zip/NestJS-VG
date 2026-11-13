@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Biblioteca de Juegos</title>
+<style>
+body{font-family:sans-serif;background:#12121c;color:#eee;max-width:600px;margin:auto;padding:1rem}
+h1{color:#7CFC00}
+input,button{padding:.5rem;margin:.2rem 0;width:100%;box-sizing:border-box;border-radius:6px;border:0}
+button{background:#7CFC00;cursor:pointer;font-weight:bold}
+.card{background:#1f1f2e;padding:.7rem;margin:.5rem 0;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+.card button{width:auto;background:#ff4d4d;color:#fff}
+#msg{color:#ffb74d}
+</style>
+</head>
+<body>
+<h1>🎮 Mi Biblioteca de Juegos</h1>
+<input id="titulo" placeholder="Título">
+<input id="genero" placeholder="Género">
+<input id="puntuacion" type="number" min="0" max="10" placeholder="Puntuación (0-10)">
+<input id="key" placeholder="API key (por defecto: gamer123)">
+<button onclick="crear()">Agregar juego</button>
+<p id="msg"></p>
+<div id="lista"></div>
+<script>
+const $ = id => document.getElementById(id);
+const headers = () => ({ 'Content-Type': 'application/json', 'x-api-key': $('key').value });
+
+async function cargar() {
+  const juegos = await (await fetch('/api/juegos')).json();
+  $('lista').innerHTML = juegos.map(j =>
+    `<div class="card"><span><b>${j.titulo}</b><br>${j.genero} · ⭐ ${j.puntuacion}/10</span><button onclick="borrar(${j.id})">X</button></div>`
+  ).join('');
+}
+
+async function enviar(url, opts) {
+  const r = await fetch(url, opts);
+  if (!r.ok) { const e = await r.json(); $('msg').textContent = [].concat(e.mensaje).join(', '); return; }
+  $('msg').textContent = '';
+  cargar();
+}
+
+function crear() {
+  enviar('/api/juegos', { method: 'POST', headers: headers(), body: JSON.stringify({
+    titulo: $('titulo').value, genero: $('genero').value, puntuacion: Number($('puntuacion').value)
+  })});
+}
+function borrar(id) { enviar('/api/juegos/' + id, { method: 'DELETE', headers: headers() }); }
+
+cargar();
+</script>
+</body>
+</html>
